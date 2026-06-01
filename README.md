@@ -243,7 +243,7 @@ For learning low-level programming, that connection is everything.
 These are the main references I use while working through the project:
 
 - [ATmega328P datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-7810-Automotive-Microcontrollers-ATmega328P_Datasheet.pdf)
-- [Arduino Nano pinout](docs/nano-pinout.pdf)
+- [Arduino Nano pinout](docs/Pinout-Nano.pdf)
 
 ## Common mistakes documented here
 

@@ -47,8 +47,9 @@ The Arduino Nano built-in LED is connected to `PB5`, which is Arduino digital pi
 ## Pin Configurations
 
 According to the datasheet of the ATMEGA328P, if we want to set a pin as output we have to set the pin in DDRx as 1 or HIGH, and to output 1 or 0 we have to set the pin in PORTx to 1 or 0.
-/
+
 ![pin-config-datasheet](../images/datasheet-ref-pin-config-pg60.png)
+
 ## Core idea
 
 ```asm

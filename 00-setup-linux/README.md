@@ -3,7 +3,7 @@
 This section explains the Linux toolchain used to build and upload AVR assembly programs for the ATmega328P which is used in the Arduino Nano / Uno / PRO Mini.
 
 I'm using the Arduino Nano, yes mine is a clone but it doesn't matter much for our use case.
-\
+
 <img src="../images/arduino-nano.jpeg" alt="Nano" width="200">
 
 
@@ -90,7 +90,7 @@ Some older Nano bootloaders use:
 BAUD = 57600
 ```
 
-Mine uses 115200 BUAD, but yours might be different.
+Mine uses 115200 BAUD, but yours might be different.
 
 If upload fails, try:
 

@@ -66,6 +66,9 @@ The `~` operator flips all bits. The assembler evaluates this at compile time.
 
 ## Registers Used
 
+Refer to the Datasheet of the ATmega328P chip.
+![datasheet-pg280](../images/datasheet-ref-reg-summary-pg280.png)
+
 ```asm
 .equ DDRB,  0x04
 .equ PORTB, 0x05
@@ -73,6 +76,10 @@ The `~` operator flips all bits. The assembler evaluates this at compile time.
 ```
 
 Same registers as lesson 01. `DDRB` controls pin direction. `PORTB` controls output state.
+
+According to the datasheet, setting a bit in DDRx to 1 makes it an output. Setting the corresponding bit in PORTx drives it HIGH or LOW.
+
+![pin-config-datasheet](../images/datasheet-ref-pin-config-pg60.png)
 
 ## Code Walk-through
 
@@ -145,6 +152,10 @@ out  0x05, r16
 ```
 
 Same result. Three times as many instructions. This is the trade-off: `sbi`/`cbi` are compact and fast for the registers they can reach; read-modify-write is universal.
+
+## Demonstration
+
+<img src="../images/01-blink-off.jpeg" alt="off" width="200"> <img src="../images/01-blink-on.jpeg" alt="on" width="200">
 
 ## What I Learned
 

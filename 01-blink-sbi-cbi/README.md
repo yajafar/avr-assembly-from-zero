@@ -1,23 +1,45 @@
 # 01 - Blink with `sbi` and `cbi`
 
-This is the first hardware project in the series and the most basic.
+The hardware equivalent of "Hello, World." — except instead of printing to a terminal, you make a tiny light flash on and off.
 
-The first arduino project every hobbyist and engineer ever makes, blinking an LED.
+Every programmer eventually ends up staring at a blinking LED wondering if they wired something wrong. It is a rite of passage.
 
-The goal is to blink the Arduino Nano built-in LED using AVR assembly and direct register control.
-
-No Arduino libraries. No `digitalWrite()`. Just the ATmega328P registers.
+The goal is to blink the Arduino Nano's built-in LED using AVR assembly and direct register control. No Arduino libraries. No `digitalWrite()`. Just the ATmega328P registers and two instructions.
 
 ## Hardware
 
 - Arduino Nano/UNO/Pro Mini
 - Built-in LED on D13 / PB5
 
-No external components are needed.
+No external components needed. The LED is already on the board.
 
-## Registers used
+## Why `sbi` and `cbi`?
 
-Refer to the Datasheet of the ATMEGA328P chip.
+These two instructions are the most direct way to flip a single bit in an I/O register:
+
+- `sbi` — **S**et **B**it in **I**/O register
+- `cbi` — **C**lear **B**it in **I**/O register
+
+One instruction. One bit changed. Everything else in the register stays the same.
+
+They do have a catch — they only reach I/O registers at addresses `0x00` through `0x1F`. For `DDRB` (`0x04`) and `PORTB` (`0x05`) that is no problem. Lesson 02 covers what to do when it is.
+
+## Instructions Used
+
+| Instruction | Meaning |
+|---|---|
+| `sbi REG, bit` | Set a single bit in an I/O register |
+| `cbi REG, bit` | Clear a single bit in an I/O register |
+| `rcall label` | Call a subroutine |
+| `rjmp label` | Jump to a label (relative) |
+| `ldi Rd, K` | Load an immediate value into a register |
+| `dec Rd` | Decrement a register by 1 |
+| `brne label` | Branch if the last result was not zero |
+| `ret` | Return from subroutine |
+
+## Registers Used
+
+Refer to the Datasheet of the ATmega328P chip.
 ![datasheet-pg280](../images/datasheet-ref-reg-summary-pg280.png)
 
 ```asm
@@ -26,69 +48,66 @@ Refer to the Datasheet of the ATMEGA328P chip.
 .equ PB5,   5
 ```
 
-## What these mean
-
-`DDRB` is the Port B data direction register.
-
-Each bit controls whether a Port B pin is an input or output:
+`DDRB` is the Port B **D**ata **D**irection **R**egister. Each bit controls whether a pin is an input or output:
 
 - `0` = input
 - `1` = output
 
-`PORTB` controls the output state of Port B pins.
+`PORTB` controls the output state of Port B pins. For a pin configured as output:
 
-For an output pin:
+- `0` = LOW
+- `1` = HIGH
 
-- `0` = `LOW`
-- `1` = `HIGH`
+The built-in LED is on `PB5`, which is Arduino digital pin `D13`.
 
-The Arduino Nano built-in LED is connected to `PB5`, which is Arduino digital pin `D13`. Refer to your specific Arduino pinout diagrams provided in the docs.
-
-## Pin Configurations
-
-According to the datasheet of the ATMEGA328P, if we want to set a pin as output we have to set the pin in DDRx as 1 or HIGH, and to output 1 or 0 we have to set the pin in PORTx to 1 or 0.
+According to the datasheet, setting a bit in DDRx to 1 makes it an output. Setting the corresponding bit in PORTx then drives it HIGH or LOW.
 
 ![pin-config-datasheet](../images/datasheet-ref-pin-config-pg60.png)
 
-## Core idea
+## Code Walk-through
+
+**Set PB5 as output:**
 
 ```asm
-sbi DDRB, PB5
+sbi DDRB, PB5       ; Set bit 5 of DDRB — PB5 is now an output
 ```
 
-`sbi` means set bit in I/O register.
-
-This sets bit `5` of `DDRB`, making `PB5` an output.
+**Turn LED on:**
 
 ```asm
-sbi PORTB, PB5
+sbi PORTB, PB5      ; Set bit 5 of PORTB — PB5 goes HIGH, LED on
 ```
 
-This sets bit `5` of `PORTB`, driving `PB5` `HIGH` and turning the LED on.
+**Turn LED off:**
 
 ```asm
-cbi PORTB, PB5
+cbi PORTB, PB5      ; Clear bit 5 of PORTB — PB5 goes LOW, LED off
 ```
 
-`cbi` means clear bit in I/O register.
+**Delay loop:**
 
-This clears bit `5` of `PORTB`, driving `PB5` `LOW` and turning the LED off.
+The delay is three nested countdown loops using `r18`, `r19`, and `r20`. The CPU just sits there decrementing counters until they hit zero — burning clock cycles on purpose.
 
-## Delay loop
+Is this a good timer? Absolutely not. Is it good enough to make an LED blink visibly? Yes.
 
-The delay is a simple software delay.
+```asm
+delay:
+    ldi r18, 255
+big_loop:
+    ldi r19, 255
+middle_loop:
+    ldi r20, 50
+small_loop:
+    dec r20
+    brne small_loop
+    dec r19
+    brne middle_loop
+    dec r18
+    brne big_loop
+    ret
+```
 
-It uses three counters:
-
-- `r18`
-- `r19`
-- `r20`
-
-The CPU counts down repeatedly to waste time.
-
-This is not an accurate timer. It is just enough delay to make the LED blink visibly.
-
-Later lessons will replace this with hardware timers.
+Later lessons will replace this with hardware timers that are actually accurate.
 
 ## Build
 
@@ -102,13 +121,13 @@ make
 make upload
 ```
 
-If your Arduino Nano appears on a different port:
+If your board is on a different port:
 
 ```bash
 make upload PORT=/dev/ttyACM0
 ```
 
-If your Nano uses the old bootloader:
+Old bootloader Nanos:
 
 ```bash
 make upload BAUD=57600
@@ -120,16 +139,18 @@ make upload BAUD=57600
 make disasm
 ```
 
-This shows the actual instructions that were generated. When trying this on your own, check out what the assembler outputs against what you wrote.
+Shows the actual machine instructions the assembler generated. Compare what you wrote with what came out — especially around the delay loop. Each `sbi` and `cbi` compiles down to a single instruction. That is the whole point of lesson 01.
 
 ## Demonstration
+
 <img src="../images/01-blink-off.jpeg" alt="off" width="200"> <img src="../images/01-blink-on.jpeg" alt="on" width="200">
 
-## What I learned
+## What I Learned
 
 - How to set a pin as output using `DDRB`
 - How to control an output pin using `PORTB`
-- How `sbi` and `cbi` work only modifying single bits
+- How `sbi` and `cbi` flip a single bit without touching the rest of the register
 - How labels and loops work in AVR assembly
-- How a basic software delay loop works
+- How a software delay loop wastes cycles on purpose
 - How to build and upload AVR assembly from Linux
+- That `sbi`/`cbi` have an address range limit (lesson 02 covers the fix)

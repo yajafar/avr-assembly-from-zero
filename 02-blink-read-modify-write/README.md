@@ -141,32 +141,29 @@ Identical to lesson 01. Triple nested counter loop using `r18`, `r19`, `r20`. No
 
 ## Build
 
-```bash
-make
+Run these from inside this lesson's folder:
+
+```text
+avr-gcc -mmcu=atmega328p -Os blink.S -o blink.elf
+avr-objcopy -O ihex -R .eeprom blink.elf blink.hex
 ```
 
 ## Upload
 
-```bash
-make upload
+Replace `COM3` with your board's port:
+
+```text
+avrdude -p atmega328p -c arduino -P COM3 -b 115200 -D -U flash:w:blink.hex:i
 ```
 
-If your board is on a different port:
+Old bootloader Nanos: use `-b 57600` instead of `-b 115200`.
 
-```bash
-make upload PORT=/dev/ttyACM0
-```
-
-Old bootloader Nanos:
-
-```bash
-make upload BAUD=57600
-```
+Not sure what your port is, or what each flag means? See [00 - Windows Setup](../00-setup-windows/README.md).
 
 ## Disassemble
 
-```bash
-make disasm
+```text
+avr-objdump -d blink.elf
 ```
 
 Compare the output to lesson 01's disassembly. Where lesson 01 used a single `sbi` or `cbi` instruction, this lesson produces three instructions per bit operation:

@@ -175,32 +175,29 @@ This is valid code. It is just backwards for a pull-up button: the LED turns on 
 
 ## Build
 
-```bash
-make
+Run these from inside this lesson's folder:
+
+```text
+avr-gcc -mmcu=atmega328p -Os button.S -o button.elf
+avr-objcopy -O ihex -R .eeprom button.elf button.hex
 ```
 
 ## Upload
 
-```bash
-make upload
+Replace `COM3` with your board's port:
+
+```text
+avrdude -p atmega328p -c arduino -P COM3 -b 115200 -D -U flash:w:button.hex:i
 ```
 
-If your board is on a different port:
+Old bootloader Nanos: use `-b 57600` instead of `-b 115200`.
 
-```bash
-make upload PORT=/dev/ttyACM0
-```
-
-Old bootloader Nanos:
-
-```bash
-make upload BAUD=57600
-```
+Not sure what your port is, or what each flag means? See [00 - Windows Setup](../00-setup-windows/README.md).
 
 ## Disassemble
 
-```bash
-make disasm
+```text
+avr-objdump -d button.elf
 ```
 
 The main loop comes out like this:

@@ -111,32 +111,29 @@ Later lessons will replace this with hardware timers that are actually accurate.
 
 ## Build
 
-```bash
-make
+Run these from inside this lesson's folder:
+
+```text
+avr-gcc -mmcu=atmega328p -Os blink.S -o blink.elf
+avr-objcopy -O ihex -R .eeprom blink.elf blink.hex
 ```
 
 ## Upload
 
-```bash
-make upload
+Replace `COM3` with your board's port:
+
+```text
+avrdude -p atmega328p -c arduino -P COM3 -b 115200 -D -U flash:w:blink.hex:i
 ```
 
-If your board is on a different port:
+Old bootloader Nanos: use `-b 57600` instead of `-b 115200`.
 
-```bash
-make upload PORT=/dev/ttyACM0
-```
-
-Old bootloader Nanos:
-
-```bash
-make upload BAUD=57600
-```
+Not sure what your port is, or what each flag means? See [00 - Windows Setup](../00-setup-windows/README.md).
 
 ## Disassemble
 
-```bash
-make disasm
+```text
+avr-objdump -d blink.elf
 ```
 
 Shows the actual machine instructions the assembler generated. Compare what you wrote with what came out — especially around the delay loop. Each `sbi` and `cbi` compiles down to a single instruction. That is the whole point of lesson 01.
@@ -152,5 +149,5 @@ Shows the actual machine instructions the assembler generated. Compare what you 
 - How `sbi` and `cbi` flip a single bit without touching the rest of the register
 - How labels and loops work in AVR assembly
 - How a software delay loop wastes cycles on purpose
-- How to build and upload AVR assembly from Linux
+- How to build and upload AVR assembly from Windows, one command at a time
 - That `sbi`/`cbi` have an address range limit (lesson 02 covers the fix)

@@ -21,13 +21,39 @@ They only work on I/O registers at addresses `0x00` through `0x1F` in the I/O ad
 
 But most of the ATmega328P's peripheral registers — timers, UART, SPI, ADC — live at higher addresses. `sbi` and `cbi` cannot reach them.
 
-The read-modify-write pattern works on any register, anywhere:
+The read-modify-write pattern works on any register:
 
 1. **Read** the current register value into a working register
 2. **Modify** only the bits you care about, leaving all others alone
 3. **Write** the modified value back to the register
 
-This is the general-purpose technique. Learn it once, use it everywhere.
+The *pattern* is universal. The instructions used for the read and write steps are not. `in` and `out` have their own reach limit too. The ATmega328P's registers fall into three tiers:
+
+| I/O address | Data address | `sbi` / `cbi` / `sbis` / `sbic` | `in` / `out` | `lds` / `sts` | Examples |
+|---|---|---|---|---|---|
+| `0x00`–`0x1F` | `0x20`–`0x3F` | yes | yes | yes | `DDRB` `0x04`, `PORTB` `0x05` |
+| `0x20`–`0x3F` | `0x40`–`0x5F` | no | yes | yes | `TCCR0A` `0x24`, `SPCR` `0x2C` |
+| — (extended I/O) | `0x60`–`0xFF` | no | no | yes | `ADCSRA` `0x7A`, `TCCR1A` `0x80`, `UCSR0B` `0xC1` |
+
+Every register has a *data address*, and it is always the I/O address + `0x20`. `lds`/`sts` use the data address. `in`/`out` and the bit instructions use the I/O address. The datasheet register summary lists both for the low registers, and only the data address for extended I/O.
+
+So for `PORTB`, read-modify-write is `in` / `ori` / `out`. For `ADCSRA` it is the same idea with different load and store instructions:
+
+```asm
+lds  r16, 0x7A          ; read ADCSRA (data address)
+ori  r16, (1 << 7)      ; set ADEN, leave other bits unchanged
+sts  0x7A, r16          ; write back
+```
+
+Learn the pattern once, use it everywhere. Later lessons on timers and UART will use the `lds`/`sts` form.
+
+### Atomicity: the catch
+
+`sbi` and `cbi` are one instruction. Nothing can happen in the middle of them.
+
+Read-modify-write is three instructions. If an interrupt fires between the `in` and the `out`, and the interrupt handler changes the same register, the `out` will overwrite that change with the stale value in `r16`. The interrupt's update is silently lost.
+
+This program has no interrupts, so it does not matter yet. It will matter once interrupts show up, and it is one reason to still prefer `sbi`/`cbi` when the register is within reach.
 
 ## Instructions Used
 

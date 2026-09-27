@@ -132,7 +132,7 @@ This pattern becomes important when working with more complex registers later.
 
 ### 03 - Button input with pull-up logic
 
-This project uses a button connected to Arduino D13 / ATmega328P PD3.
+This project uses a button connected between Arduino D3 / ATmega328P PD3 and GND. No external resistor is needed because the chip's internal pull-up is enabled in code.
 
 The button uses pull-up logic:
 

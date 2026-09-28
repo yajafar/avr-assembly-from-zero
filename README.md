@@ -1,6 +1,6 @@
 # AVR Assembly From Zero
 
-A beginner-friendly AVR assembly series for the ATmega328P which is used in the Arduino Nano/Uno/Pro Mini, built from real hardware experiments, Linux tooling, Makefiles, disassembly, and the mistakes beginners actually make.
+A beginner-friendly AVR assembly series for the ATmega328P which is used in the Arduino Nano/Uno/Pro Mini, built from real hardware experiments, Windows command-line tools, disassembly, and the mistakes beginners actually make.
 
 ## Why this project exists
 Most Arduino tutorials hide the hardware behind libraries.
@@ -24,20 +24,21 @@ This project currently uses:
 
 - Arduino board using the ATmega328P microcontroller (I'm using the Arduino Nano, you can also use the Arduino Uno)
 - Breadboard and jumper wires
-- Linux development environment
+- Windows PC
   
 <img src="images/hardware.jpeg" alt="Nano" width="200">
 
 ## Tools used
 
-The workflow is based on Linux terminal tools:
+The workflow is based on Windows command-line tools, run from Command Prompt or PowerShell:
 
 - `avr-gcc`
 - `avr-objcopy`
 - `avr-objdump`
 - `avrdude`
-- `make`
 - VS Code, optional
+
+See [00 - Windows Setup](00-setup-windows/README.md) for how to install them.
 
 The goal is to understand the real embedded workflow:
 
@@ -58,7 +59,7 @@ Current and planned topics include:
 - Modifying bytes with bit masks
 - Button input using pull-up logic
 - Conditional branching
-- Makefile-based builds to make the workflow easier
+- Building and uploading by hand, one command per step
 - Disassembly with `avr-objdump`
 - Common beginner mistakes and why they happen
 
@@ -79,7 +80,7 @@ Future topics may include:
 avr-assembly-from-zero/
 ├── README.md
 ├── LICENSE
-├── 00-setup-linux/
+├── 00-setup-windows/
 ├── 01-blink-sbi-cbi/
 ├── 02-blink-read-modify-write/
 ├── 03-button-input-pullup/
@@ -132,7 +133,7 @@ This pattern becomes important when working with more complex registers later.
 
 ### 03 - Button input with pull-up logic
 
-This project uses a button connected to Arduino D13 / ATmega328P PD3.
+This project uses a button connected between Arduino D3 / ATmega328P PD3 and GND. No external resistor is needed because the chip's internal pull-up is enabled in code.
 
 The button uses pull-up logic:
 
@@ -183,46 +184,35 @@ Ask me how I know.
 
 ## Building and uploading
 
-Each project includes a `Makefile`.
+There are no build scripts. Every lesson is built and uploaded with the same few commands, typed by hand, so you can see each step of the workflow.
 
-Typical commands:
+From inside a lesson folder (shown here for `blink.S`):
 
-```bash
-make
-make upload
-make disasm
-make clean
+```text
+avr-gcc -mmcu=atmega328p -Os blink.S -o blink.elf
+avr-objcopy -O ihex -R .eeprom blink.elf blink.hex
+avrdude -p atmega328p -c arduino -P COM3 -b 115200 -D -U flash:w:blink.hex:i
 ```
 
-Example upload settings for an Arduino Nano using the ATmega328P:
+1. `avr-gcc` turns the assembly source into an ELF file
+2. `avr-objcopy` turns the ELF file into a HEX file
+3. `avrdude` uploads the HEX file to the board
 
-```make
-MCU = atmega328p
-PORT = /dev/ttyUSB0
-BAUD = 115200
-```
+Replace `COM3` with your board's port (Device Manager → Ports (COM & LPT)).
 
-If your board uses a different port, you can override it:
+If your board uses the old Nano bootloader, use `-b 57600` instead of `-b 115200`.
 
-```bash
-make upload PORT=/dev/ttyACM0
-```
-
-If your board uses the old Nano bootloader, you may need:
-
-```bash
-make upload BAUD=57600
-```
+[00 - Windows Setup](00-setup-windows/README.md) explains every flag.
 
 ## Why disassembly matters
 
 One of the most important tools in this project is:
 
-```bash
-make disasm
+```text
+avr-objdump -d blink.elf
 ```
 
-This uses `avr-objdump` to show what the assembler actually produced after it assembled our code.
+This shows what the assembler actually produced after it assembled our code.
 
 That matters because assembly is close to machine code, but it is still not the same thing. The disassembly helps connect:
 
